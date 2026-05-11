@@ -1,6 +1,6 @@
 # IDC Shop Widget
 
-**[🔗 Live Demo](https://only1stumpy.github.io/Test_IDC/)**
+**[🔗 Live Demo](https://only1stumpy.github.io/TEST_IDC/)**
 
 Виджет карусели товаров для встраивания на любую страницу. Получает данные из API shop.idc.md и отображает коллекции товаров в виде интерактивной карусели с поддержкой свайпов, клавиатурной навигации и адаптивной верстки.
 
