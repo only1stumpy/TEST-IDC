@@ -3,6 +3,7 @@ import { formatPrice, createElement, createPriceElement } from '../utils/helpers
 const STOCK_STATUS = {
     IN_STOCK: 'IN_STOCK',
     LOW_STOCK: 'LOW_STOCK',
+    OUT_OF_STOCK: 'OUT_OF_STOCK',
 }
 
 // Создание DOM элемента карточки товара
@@ -43,14 +44,15 @@ export function createProductCard(product) {
 
     const content = createElement('div', 'idc-widget-card__content');
 
-    // Надпись статуса наличия
-    const stockStatus = createElement('div', 'idc-widget-card__stock');
     if (product.stockStatus === STOCK_STATUS.IN_STOCK) {
-        stockStatus.textContent = 'В наличии';
-        stockStatus.classList.add('idc-widget-card__stock--in-stock');
+        const stockStatus = createElement('div', 'idc-widget-card__stock idc-widget-card__stock--in-stock', 'В наличии');
+        content.appendChild(stockStatus);
     } else if (product.stockStatus === STOCK_STATUS.LOW_STOCK) {
-        stockStatus.textContent = 'Мало';
-        stockStatus.classList.add('idc-widget-card__stock--low-stock');
+        const stockStatus = createElement('div', 'idc-widget-card__stock idc-widget-card__stock--low-stock', 'Мало');
+        content.appendChild(stockStatus);
+    } else if (product.stockStatus === STOCK_STATUS.OUT_OF_STOCK) {
+        const stockStatus = createElement('div', 'idc-widget-card__stock idc-widget-card__stock--out-of-stock', 'Нет в наличии');
+        content.appendChild(stockStatus);
     }
 
     const category = createElement('div', 'idc-widget-card__category', product.category);
@@ -66,7 +68,6 @@ export function createProductCard(product) {
     const price = createPriceElement(product.price, 'idc-widget-card__price');
     priceContainer.appendChild(price);
 
-    content.appendChild(stockStatus);
     content.appendChild(category);
     content.appendChild(name);
     if (product.creditText) {

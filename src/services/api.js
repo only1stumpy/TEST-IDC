@@ -1,40 +1,51 @@
-const API_URL = 'https://shop.idc.md/api/v1/shop/main'
+import {getByPath} from '../utils/helpers.js';
 
-
-// Fetch данных с API
-export async function fetchShopMain() {
+export async function fetchData(url) {
     try {
-        const res = await fetch(API_URL);
+        const res = await fetch(url);
         if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
         const data = await res.json();
 
-        // Проверяем структуру ответа
         if (!data || typeof data !== 'object') {
             throw new Error('Invalid response format');
         }
 
         return data;
     } catch (err) {
-        console.error('Failed to fetch shop data:', err);
-        throw err; // Пробрасываем ошибку наверх для корректной обработки
+        console.error('Failed to fetch data:', err);
+        throw err;
     }
 }
 
-// Извлекаем коллекции из данных API
-export function extractCollections(apiData) {
-    if (!apiData || !apiData.data) return [];
+export function extractCollections(apiData, dataPath = 'data') {
+    const rawData = getByPath(dataPath, apiData);
+    if (!rawData || !Array.isArray(rawData)) return [];
 
-    return apiData.data
+    return rawData
         .filter(item => item.type === 'collections')
         .map(collection => ({
             id: collection.id,
             title: collection.title,
             products: collection.data.map(transformProduct)
-        }))
+        }));
 }
 
+export function extractProducts(apiData, dataPath = 'data', deduplicate = false) {
+    const rawData = getByPath(dataPath, apiData);
+    if (!rawData || !Array.isArray(rawData)) return [];
 
-// Трансформируем данные товара из форрмата API в формат виджета
+    const products = rawData.map(transformProduct);
+
+    if (!deduplicate) return products;
+
+    const seen = new Set();
+    return products.filter(product => {
+        if (seen.has(product.name)) return false;
+        seen.add(product.name);
+        return true;
+    });
+}
+
 export function transformProduct(product) {
     return {
         id: product.id,

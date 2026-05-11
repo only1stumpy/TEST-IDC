@@ -57,14 +57,65 @@ Test_IDC/
 
 ## Параметры
 
+### Базовые параметры
+
 ```js
 initWidget('idc-widget', {
-    collectionIds: [6],         // ID коллекций из API (по умолчанию: [6] — Новинки)
+    collectionIds: [6],         // ID коллекций из API (по умолчанию: [6])
     carouselOptions: {
         slidesPerView: 4,       // Слайдов на десктопе (по умолчанию: 4)
         slidesPerViewTablet: 2, // Слайдов на планшете (по умолчанию: 2)
         slidesPerViewMobile: 2, // Слайдов на мобильном (по умолчанию: 2)
     }
+});
+```
+
+### Гибкая настройка API
+
+Виджет поддерживает работу с любым API endpoint:
+
+**apiUrl** (string) — URL API для загрузки данных  
+По умолчанию: `'https://shop.idc.md/api/v1/shop/main'`
+
+**dataPath** (string) — путь к данным в ответе API (например: `'data.items'` или `'products'`)  
+По умолчанию: `'data'`
+
+**dataType** (string) — тип данных: `'collections'` или `'products'`  
+По умолчанию: `'collections'`
+
+**deduplicateByName** (boolean) — удалять дубликаты товаров по полю `name` (для вариантов одной модели)  
+По умолчанию: `false`
+
+**title** (string) — заголовок для режима `dataType: 'products'`
+
+### Примеры
+
+#### Фильтрованный каталог
+
+```js
+initWidget('idc-widget', {
+    apiUrl: 'https://shop.idc.md/api/v1/shop/categories/smarts?filter[attribute][5g][]=yes',
+    dataPath: 'data.products.data',
+    dataType: 'products',
+    title: 'Телефоны с 5G',
+    deduplicateByName: true  // Убрать дубликаты (цветовые варианты)
+});
+```
+
+#### Несколько виджетов на странице
+
+```js
+// Новинки
+initWidget('widget-new', {
+    collectionIds: [6]
+});
+
+// 5G телефоны
+initWidget('widget-5g', {
+    apiUrl: 'https://shop.idc.md/api/v1/shop/categories/smarts?filter[attribute][5g][]=yes',
+    dataPath: 'data.products.data',
+    dataType: 'products',
+    title: 'Телефоны с 5G'
 });
 ```
 

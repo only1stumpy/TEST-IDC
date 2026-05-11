@@ -9,13 +9,38 @@
     <title>IDC Widget</title>
 </head>
 <body>
-    <section class="idc-widget-container">
-        <div id="idc-widget"></div>
-    </section>
+<section class="idc-widget-container">
+    <div id="idc-widget-new"></div>
+</section>
+<section class="idc-widget-container">
+    <div id="idc-widget-hits"></div>
+</section>
+<section class="idc-widget-container">
+    <div id="idc-widget-5g-duplicates"></div>
+</section>
+<section class="idc-widget-container">
+    <div id="idc-widget-5g"></div>
+</section>
 
 <script type="module">
     import {initWidget} from "./src/index.js";
-    initWidget("idc-widget")
+    initWidget("idc-widget-new")
+    initWidget("idc-widget-hits", {
+        collectionIds:[5]
+    })
+    initWidget("idc-widget-5g-duplicates", {
+        apiUrl: 'https://shop.idc.md/api/v1/shop/categories/smarts?filter[attribute][5g][]=yes',
+        dataPath: 'data.products.data',
+        dataType: 'products',
+        title: 'Телефоны с 5G'
+    })
+    initWidget("idc-widget-5g", {
+        apiUrl: 'https://shop.idc.md/api/v1/shop/categories/smarts?filter[attribute][5g][]=yes',
+        dataPath: 'data.products.data',
+        dataType: 'products',
+        title: 'Телефоны с 5G (без дупликатов)',
+        deduplicateByName: true
+    })
 </script>
 </body>
 </html>

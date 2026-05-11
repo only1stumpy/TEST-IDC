@@ -227,6 +227,10 @@
     color: var(--primary-orange);
 }
 
+.idc-widget-card__stock--out-of-stock {
+    color: var(--secondary-text);
+}
+
 .idc-widget-card__stock::before {
     content: '';
     width: 6px;

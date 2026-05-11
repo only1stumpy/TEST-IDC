@@ -1,12 +1,16 @@
 import {createElement} from "./utils/helpers.js";
-import {fetchShopMain, extractCollections} from "./services/api.js";
+import {fetchData, extractCollections, extractProducts} from "./services/api.js";
 import {createCarousel} from "./components/Carousel.js";
 
 
 export async function initWidget(containerId, options = {}){
     const {
+        apiUrl = 'https://shop.idc.md/api/v1/shop/main',
+        dataPath = 'data',
+        dataType = 'collections',
         collectionIds = [6],
-        carouselOptions = {}
+        carouselOptions = {},
+        deduplicateByName = false
     } = options;
 
     const container = document.getElementById(containerId);
@@ -19,33 +23,44 @@ export async function initWidget(containerId, options = {}){
     container.appendChild(loader);
 
     try {
-        const data = await fetchShopMain();
+        const data = await fetchData(apiUrl);
 
-        // Проверяем что API вернул валидные данные
-        if (!data || !data.data) {
+        if (!data) {
             throw new Error('Invalid API response');
         }
 
-        const collections = extractCollections(data);
+        let collections = [];
+
+        if (dataType === 'collections') {
+            collections = extractCollections(data, dataPath);
+
+            if (collectionIds && collectionIds.length > 0) {
+                collections = collections.filter(col =>
+                    collectionIds.includes(col.id) && col.products.length > 0
+                );
+            }
+        } else if (dataType === 'products') {
+            const products = extractProducts(data, dataPath, deduplicateByName);
+            if (products.length > 0) {
+                collections = [{
+                    id: 1,
+                    title: options.title || '',
+                    products: products
+                }];
+            }
+        }
 
         loader.remove();
 
-        const filteredCollections = collections.filter(col =>
-            collectionIds.includes(col.id) && col.products.length > 0
-        );
-
-        if (filteredCollections.length === 0) {
+        if (collections.length === 0) {
             const emptyMessage = createElement('div', 'idc-widget-empty', 'Нет доступных товаров');
             container.appendChild(emptyMessage);
             return;
         }
 
-        filteredCollections.forEach(collection => {
+        collections.forEach(collection => {
             const section = createElement('div', 'idc-widget-section');
-
-
             const carousel = createCarousel(collection.products, collection.title, carouselOptions);
-
             section.appendChild(carousel);
             container.appendChild(section);
         });
@@ -58,7 +73,6 @@ export async function initWidget(containerId, options = {}){
     }
 }
 
-// Экспорт в глобальную область для использования без сборщика
 if (typeof window !== 'undefined') {
     window.IDCWidget = { initWidget };
 }
