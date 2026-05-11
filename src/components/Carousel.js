@@ -20,6 +20,10 @@ export function createCarousel(products, title = '', options = {}) {
     // Массив для хранения обработчиков событий
     const eventListeners = [];
 
+    // Кеш для оптимизации touchMove
+    let cachedSlideElements = null;
+    let cachedDimensions = null;
+
     // Создание
     products.forEach(product => {
         const slide = createElement('div', 'idc-widget-carousel__slide');
@@ -49,6 +53,9 @@ export function createCarousel(products, title = '', options = {}) {
         } else {
             currentSlidesPerView = slidesPerView;
         }
+        // Сбрасываем кеш при изменении размера
+        cachedSlideElements = null;
+        cachedDimensions = null;
         updateCarousel();
     }
 
@@ -114,9 +121,13 @@ export function createCarousel(products, title = '', options = {}) {
 
         slidesContainer.style.transition = 'none';
 
+        // Кешируем карточки для оптимизации
+        if (!cachedSlideElements) {
+            cachedSlideElements = slidesContainer.querySelectorAll('.idc-widget-product-card');
+        }
+
         // Помечаем все карточки что начался свайп
-        const cards = slidesContainer.querySelectorAll('.idc-widget-product-card');
-        cards.forEach(card => card.dataset.swiping = 'false');
+        cachedSlideElements.forEach(card => card.dataset.swiping = 'false');
     };
 
     const touchMoveHandler = (e) => {
@@ -134,35 +145,40 @@ export function createCarousel(products, title = '', options = {}) {
         if (Math.abs(diff) > 5 && !hasMoved) {
             hasMoved = true;
             // Помечаем все карточки что идет свайп
-            const cards = slidesContainer.querySelectorAll('.idc-widget-product-card');
-            cards.forEach(card => card.dataset.swiping = 'true');
+            if (cachedSlideElements) {
+                cachedSlideElements.forEach(card => card.dataset.swiping = 'true');
+            }
         }
 
         const isMobile = window.innerWidth < 768;
 
         if (isMobile) {
-            // На мобилке - свободный скролл с динамическими границами
-            const trackWidth = track.offsetWidth;
-            const percentDiff = (diff / trackWidth) * 100;
-            const newTransform = startTransform + percentDiff;
+            // Кешируем размеры для оптимизации
+            if (!cachedDimensions) {
+                const slideElements = slidesContainer.querySelectorAll('.idc-widget-carousel__slide');
+                if (slideElements.length > 0) {
+                    const firstSlide = slideElements[0];
+                    const slideWidthPx = firstSlide.offsetWidth;
+                    const gapPx = parseFloat(window.getComputedStyle(slidesContainer).gap) || 0;
+                    const totalWidthPx = (slideWidthPx * products.length) + (gapPx * (products.length - 1));
+                    const containerWidthPx = slidesContainer.parentElement.offsetWidth;
+                    const maxScrollPx = Math.max(0, totalWidthPx - containerWidthPx);
 
-            // Границы: рассчитываем реальную ширину всех слайдов
-            const slideElements = slidesContainer.querySelectorAll('.idc-widget-carousel__slide');
-            if (slideElements.length > 0) {
-                const firstSlide = slideElements[0];
-                const slideWidthPx = firstSlide.offsetWidth;
-                const gapPx = parseFloat(window.getComputedStyle(slidesContainer).gap) || 0;
+                    cachedDimensions = {
+                        trackWidth: track.offsetWidth,
+                        minTransform: -(maxScrollPx / containerWidthPx * 100),
+                        maxTransform: 0
+                    };
+                }
+            }
 
-                // Общая ширина всех слайдов + gaps
-                const totalWidthPx = (slideWidthPx * products.length) + (gapPx * (products.length - 1));
-                const containerWidthPx = slidesContainer.parentElement.offsetWidth;
-
-                // Максимальное смещение в процентах
-                const maxScrollPx = Math.max(0, totalWidthPx - containerWidthPx);
-                const minTransform = -(maxScrollPx / containerWidthPx * 100);
-                const maxTransform = 0;
-                const clampedTransform = Math.max(minTransform, Math.min(maxTransform, newTransform));
-
+            if (cachedDimensions) {
+                const percentDiff = (diff / cachedDimensions.trackWidth) * 100;
+                const newTransform = startTransform + percentDiff;
+                const clampedTransform = Math.max(
+                    cachedDimensions.minTransform,
+                    Math.min(cachedDimensions.maxTransform, newTransform)
+                );
                 slidesContainer.style.transform = `translateX(${clampedTransform}%)`;
             }
         } else {
@@ -214,8 +230,9 @@ export function createCarousel(products, title = '', options = {}) {
 
         // Сбрасываем флаг свайпа после небольшой задержки
         setTimeout(() => {
-            const cards = slidesContainer.querySelectorAll('.idc-widget-product-card');
-            cards.forEach(card => card.dataset.swiping = 'false');
+            if (cachedSlideElements) {
+                cachedSlideElements.forEach(card => card.dataset.swiping = 'false');
+            }
             hasMoved = false;
         }, 100);
     };
@@ -224,6 +241,8 @@ export function createCarousel(products, title = '', options = {}) {
         if (isDragging) {
             isDragging = false;
             hasMoved = false;
+            // Сбрасываем кеш при отмене
+            cachedDimensions = null;
         }
     };
 
@@ -290,14 +309,25 @@ export function createCarousel(products, title = '', options = {}) {
     carousel.addEventListener('keydown', keydownHandler);
     eventListeners.push({ element: carousel, event: 'keydown', handler: keydownHandler });
 
-    window.addEventListener('resize', setSlidesPerView);
-    eventListeners.push({ element: window, event: 'resize', handler: setSlidesPerView });
+    // Debounce для resize
+    let resizeTimeout;
+    const debouncedResize = () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(setSlidesPerView, 150);
+    };
+
+    window.addEventListener('resize', debouncedResize);
+    eventListeners.push({ element: window, event: 'resize', handler: debouncedResize });
+
     // Функция очистки для удаления всех обработчиков
     carousel.destroy = () => {
+        clearTimeout(resizeTimeout);
         eventListeners.forEach(({ element, event, handler }) => {
             element.removeEventListener(event, handler);
         });
         eventListeners.length = 0;
+        cachedSlideElements = null;
+        cachedDimensions = null;
     };
 
     return carousel;

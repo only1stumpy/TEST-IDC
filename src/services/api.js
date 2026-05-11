@@ -6,10 +6,17 @@ export async function fetchShopMain() {
     try {
         const res = await fetch(API_URL);
         if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
-        return await res.json();
+        const data = await res.json();
+
+        // Проверяем структуру ответа
+        if (!data || typeof data !== 'object') {
+            throw new Error('Invalid response format');
+        }
+
+        return data;
     } catch (err) {
         console.error('Failed to fetch shop data:', err);
-        return null;
+        throw err; // Пробрасываем ошибку наверх для корректной обработки
     }
 }
 

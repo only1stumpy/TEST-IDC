@@ -20,6 +20,12 @@ export async function initWidget(containerId, options = {}){
 
     try {
         const data = await fetchShopMain();
+
+        // Проверяем что API вернул валидные данные
+        if (!data || !data.data) {
+            throw new Error('Invalid API response');
+        }
+
         const collections = extractCollections(data);
 
         loader.remove();
