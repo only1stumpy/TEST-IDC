@@ -57,36 +57,28 @@ Test_IDC/
 
 ## Параметры
 
-### Базовые параметры
-
 ```js
 initWidget('idc-widget', {
-    collectionIds: [6],         // ID коллекций из API (по умолчанию: [6])
-    carouselOptions: {
-        slidesPerView: 4,       // Слайдов на десктопе (по умолчанию: 4)
-        slidesPerViewTablet: 2, // Слайдов на планшете (по умолчанию: 2)
-        slidesPerViewMobile: 2, // Слайдов на мобильном (по умолчанию: 2)
-    }
+  // Источник данных
+  apiUrl: 'https://shop.idc.md/api/v1/shop/main',
+  dataPath: 'data',
+  dataType: 'collections', // 'collections' | 'products'
+
+  // Фильтрация коллекций (только для dataType: 'collections')
+  collectionIds: [6],
+
+  // Только для dataType: 'products'
+  title: 'Новинки',
+  deduplicateByName: false,
+
+  // Карусель
+  carouselOptions: {
+    slidesPerView: 4,
+    slidesPerViewTablet: 2,
+    slidesPerViewMobile: 2,
+  }
 });
 ```
-
-### Гибкая настройка API
-
-Виджет поддерживает работу с любым API endpoint:
-
-**apiUrl** (string) — URL API для загрузки данных  
-По умолчанию: `'https://shop.idc.md/api/v1/shop/main'`
-
-**dataPath** (string) — путь к данным в ответе API (например: `'data.items'` или `'products'`)  
-По умолчанию: `'data'`
-
-**dataType** (string) — тип данных: `'collections'` или `'products'`  
-По умолчанию: `'collections'`
-
-**deduplicateByName** (boolean) — удалять дубликаты товаров по полю `name` (для вариантов одной модели)  
-По умолчанию: `false`
-
-**title** (string) — заголовок для режима `dataType: 'products'`
 
 ### Примеры
 
